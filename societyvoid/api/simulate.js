@@ -54,8 +54,15 @@ Rules: global_emotions 3-5 from: Fear,Anger,Hope,Trust,Disgust,Surprise,Anxiety,
     const data = await response.json();
     if (data.error) throw new Error(data.error.message);
     const text = data.choices?.[0]?.message?.content || "";
-    const s = text.indexOf("{"), e = text.lastIndexOf("}");
-    const parsed = JSON.parse(text.slice(s, e + 1));
+    // Clean the text - remove markdown, control characters
+    const clean = text
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
+      .replace(/[\x00-\x1F\x7F]/g, " ")
+      .trim();
+    const s = clean.indexOf("{"), e = clean.lastIndexOf("}");
+    if (s === -1 || e === -1) throw new Error("No JSON found in response");
+    const parsed = JSON.parse(clean.slice(s, e + 1));
     return res.status(200).json(parsed);
   } catch (e) {
     return res.status(500).json({ error: e.message || "Simulation failed" });
