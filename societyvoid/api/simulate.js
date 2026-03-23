@@ -54,15 +54,24 @@ Rules: global_emotions 3-5 from: Fear,Anger,Hope,Trust,Disgust,Surprise,Anxiety,
     const data = await response.json();
     if (data.error) throw new Error(data.error.message);
     const text = data.choices?.[0]?.message?.content || "";
-    // Clean the text - remove markdown, control characters
     const clean = text
-      .replace(/```json/g, "")
-      .replace(/```/g, "")
-      .replace(/[\x00-\x1F\x7F]/g, " ")
+      .replace(/```json/g, "").replace(/```/g, "")
+      .replace(/[\u2018\u2019]/g, "'")
+      .replace(/[\u201C\u201D]/g, '"')
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
       .trim();
     const s = clean.indexOf("{"), e = clean.lastIndexOf("}");
     if (s === -1 || e === -1) throw new Error("No JSON found in response");
-    const parsed = JSON.parse(clean.slice(s, e + 1));
+    let parsed;
+    try {
+      parsed = JSON.parse(clean.slice(s, e + 1));
+    } catch(parseErr) {
+      // Try to fix common JSON issues
+      const fixed = clean.slice(s, e + 1)
+        .replace(/,\s*}/g, "}").replace(/,\s*]/g, "]")
+        .replace(/([{,]\s*)(\w+)(\s*:)/g, '$1"$2"$3');
+      parsed = JSON.parse(fixed);
+    }
     return res.status(200).json(parsed);
   } catch (e) {
     return res.status(500).json({ error: e.message || "Simulation failed" });
