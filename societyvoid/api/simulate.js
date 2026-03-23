@@ -43,8 +43,8 @@ Rules: global_emotions 3-5 from: Fear,Anger,Hope,Trust,Disgust,Surprise,Anxiety,
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${GROQ_KEY}` },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        max_tokens: 2000, temperature: 0.65,
+        model: "llama3-8b-8192",
+        max_tokens: 2000, temperature: 0.3,
         messages: [
           { role: "system", content: "Socio-economic simulator. Valid JSON only. No markdown. Start with {" },
           { role: "user", content: prompt }
